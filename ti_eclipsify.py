@@ -125,6 +125,8 @@ if not os.path.exists(resources_folder):
 	log.error("Couldn't find a Resources folder here.")
 	sys.exit(1)
 
+resources_android_folder = os.path.join(resources_folder, 'android')	
+
 android_folder = os.path.join('.', 'build', 'android')
 
 assets_folder = os.path.join(android_folder, 'assets')
@@ -231,6 +233,16 @@ else:
 		os.symlink(os.path.abspath(resources_folder), resources_dest)
 	if not os.path.exists(tiapp_dest):
 		os.symlink(os.path.abspath(os.path.join('.', 'tiapp.xml')), tiapp_dest)
+	if os.path.exists(resources_android_folder):
+		res_android_files = os.listdir(resources_android_folder)
+		if res_android_files:
+			for one_res_android_file in res_android_files:
+				one_res_android_file_dest = os.path.join(resources_dest, one_res_android_file)
+				log.info(one_res_android_file_dest)
+				if not os.path.exists(one_res_android_file_dest):
+					one_res_android_file_src = os.path.abspath(os.path.join(resources_android_folder, one_res_android_file))
+					#log.info("sym: " + one_res_android_file_dest + ' -> ' + one_res_android_file_src)
+					os.symlink(one_res_android_file_src, one_res_android_file_dest)
 
 # put debuggable=true in Android manifest so you can do device debugging.
 import codecs, re
