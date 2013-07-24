@@ -39,7 +39,7 @@ android.library.reference.19=../android/modules/ui
 android.library.reference.20=../android/modules/utils
 android.library.reference.21=../android/modules/xml
 """
-dot_classpath="""<?xml version="1.0" encoding="UTF-8"?>
+dot_classpath_part1="""<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
   <classpathentry kind="src" path="src"/>
   <classpathentry kind="src" path="gen"/>
@@ -51,6 +51,8 @@ dot_classpath="""<?xml version="1.0" encoding="UTF-8"?>
   <classpathentry kind="lib" path="/titanium-xml/lib/jaxen-1.1.1.jar"/>
   <classpathentry kind="lib" path="/titanium/lib/android-support-v4.jar"/>
   <classpathentry kind="lib" path="/titanium/lib/thirdparty.jar"/>
+"""
+dot_classpath_part2="""
   <classpathentry kind="output" path="bin/classes"/>
 </classpath>
 """
@@ -122,6 +124,8 @@ resources_folder = os.path.join('.', 'Resources')
 if not os.path.exists(resources_folder):
 	log.error("Couldn't find a Resources folder here.")
 	sys.exit(1)
+
+resources_android_folder = os.path.join(resources_folder, 'android')	
 
 android_folder = os.path.join('.', 'build', 'android')
 
@@ -229,6 +233,16 @@ else:
 		os.symlink(os.path.abspath(resources_folder), resources_dest)
 	if not os.path.exists(tiapp_dest):
 		os.symlink(os.path.abspath(os.path.join('.', 'tiapp.xml')), tiapp_dest)
+	if os.path.exists(resources_android_folder):
+		res_android_files = os.listdir(resources_android_folder)
+		if res_android_files:
+			for one_res_android_file in res_android_files:
+				one_res_android_file_dest = os.path.join(resources_dest, one_res_android_file)
+				log.info(one_res_android_file_dest)
+				if not os.path.exists(one_res_android_file_dest):
+					one_res_android_file_src = os.path.abspath(os.path.join(resources_android_folder, one_res_android_file))
+					#log.info("sym: " + one_res_android_file_dest + ' -> ' + one_res_android_file_src)
+					os.symlink(one_res_android_file_src, one_res_android_file_dest)
 
 # put debuggable=true in Android manifest so you can do device debugging.
 import codecs, re
