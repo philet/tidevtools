@@ -39,7 +39,7 @@ android.library.reference.19=../android/modules/ui
 android.library.reference.20=../android/modules/utils
 android.library.reference.21=../android/modules/xml
 """
-dot_classpath="""<?xml version="1.0" encoding="UTF-8"?>
+dot_classpath_part1="""<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
   <classpathentry kind="src" path="src"/>
   <classpathentry kind="src" path="gen"/>
@@ -51,6 +51,8 @@ dot_classpath="""<?xml version="1.0" encoding="UTF-8"?>
   <classpathentry kind="lib" path="/titanium-xml/lib/jaxen-1.1.1.jar"/>
   <classpathentry kind="lib" path="/titanium/lib/android-support-v4.jar"/>
   <classpathentry kind="lib" path="/titanium/lib/thirdparty.jar"/>
+"""
+dot_classpath_part2="""
   <classpathentry kind="output" path="bin/classes"/>
 </classpath>
 """
@@ -239,8 +241,42 @@ xml = re.sub(r'android\:debuggable="false"', 'android:debuggable="true"', xml)
 f = codecs.open(os.path.join(android_folder, 'AndroidManifest.xml'), 'w', 'utf-8')
 f.write(xml)
 
+# Get the modules used in the application
+import xml.etree.ElementTree as ET
+tree = ET.parse(os.path.join('.', 'tiapp.xml'))
+root = tree.getroot()
+modules = root.findall(".//modules/module[@platform='android']")
+dot_classpath_entries = []
+for module in modules:
+	module_name = module.text
+	module_version = module.get('version')
+	module_path = os.path.join('.', 'modules', 'android', module_name, module_version)
+	module_jar_name = module_name.rsplit('.', 1)[1] + '.jar'
+	module_jar_path = os.path.abspath(os.path.join(module_path, module_jar_name))
+	#log.info(module_name + ': ' + module_version + ' | ' + module_jar_name)
+	#log.info(module_jar_path)
+	dot_classpath_entries.append('  <classpathentry exported="true" kind="lib" path="' + module_jar_path + '"/>')
+	module_lib_path = os.path.join(module_path, 'lib')
+	if os.path.exists(module_lib_path):
+		module_lib_jars = os.listdir(module_lib_path)
+		for module_lib_jar in module_lib_jars:
+			module_lib_jar_path = os.path.abspath(os.path.join(module_lib_path, module_lib_jar))
+			dot_classpath_entries.append('  <classpathentry exported="true" kind="lib" path="' + module_lib_jar_path + '"/>')
+	module_libs_dir = os.path.join(module_path, "libs")
+	if os.path.exists(module_libs_dir):
+		for root, dirs, files in os.walk(module_libs_dir):
+			for filename in files:
+				full_path = os.path.join(root, filename)
+				rel_path = os.path.relpath(full_path, module_libs_dir)
+				dest_file = os.path.join(os.path.abspath(libs_folder), rel_path)
+				if not os.path.exists(dest_file):
+					if not os.path.exists(os.path.dirname(dest_file)):
+						os.makedirs(os.path.dirname(dest_file))
+					shutil.copyfile(full_path, dest_file)			
+
 # Write the required Eclipse/ADT .project, .classpath and project.properties files.
 f = codecs.open(os.path.join(android_folder, ".classpath"), "w")
+dot_classpath = ''.join([dot_classpath_part1, '\n'.join(dot_classpath_entries), dot_classpath_part2])
 f.write(dot_classpath)
 f.close()
 
